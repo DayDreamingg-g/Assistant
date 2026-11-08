@@ -111,8 +111,11 @@ def launch_app(app_name, exe_path):
 
 def check_window(hwnd, search_data):
     title = win32gui.GetWindowText(hwnd)
+    target = search_data["app_name"]
 
-    if search_data["app_name"] in title and "Overlay" not in title and win32gui.IsWindowVisible(hwnd):
+    matches = title == target if target == "Steam" else target in title
+
+    if matches and "Overlay" not in title and win32gui.IsWindowVisible(hwnd):
         search_data["hwnd"] = hwnd
 
     return True
