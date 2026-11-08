@@ -2,19 +2,11 @@ import subprocess
 import win32gui
 import win32con
 import pywintypes
-from PyQt6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLabel
+from PyQt6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLabel, QMessageBox
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon, QMouseEvent
 import sys
-
-discord_exe_path = "C:/Users/facei/AppData/Local/Discord/Discord.exe"
-discord_app_name = " - Discord"
-spotify_exe_path = "C:/Users/facei/AppData/Roaming/Spotify/Spotify.exe"
-spotify_app_name = "Spotify"
-steam_exe_path = "C:/Program Files (x86)/Steam/steam.exe"
-steam_app_name = "Steam"
-browser_exe_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
-browser_app_name = "Chrome"
+from functools import partial
 
 def main():
     visual_box()
@@ -32,26 +24,22 @@ def visual_box():
     layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
     window.setLayout(layout)
 
-    discord_tile = create_app_tile("Discord", "icons/discord.ico")
-    discord_tile.clicked.connect(lambda: launch_app(discord_app_name, discord_exe_path))
+    apps = {
+        "Discord": ("icons/discord.ico", " - Discord", "C:/Users/facei/AppData/Local/Discord/Discord.exe"),
+        "Spotify": ("icons/spotify.png", "Spotify", "C:/Users/facei/AppData/Roaming/Spotify/Spotify.exe"),
+        "Steam": ("icons/steam.png", "Steam", "C:/Program Files (x86)/Steam/steam.exe"),
+        "Browser": ("icons/browser.png", "Chrome", "C:/Program Files/Google/Chrome/Application/chrome.exe")
+    }
 
-    spotify_tile = create_app_tile("Spotify", "icons/spotify.png")
-    spotify_tile.clicked.connect(lambda: launch_app(spotify_app_name, spotify_exe_path))
+    for name in apps:
+        icon_path, app_name, exe_path = apps[name]
 
-    steam_tile = create_app_tile(app_name="Steam", icon_path="icons/steam.png")
-    steam_tile.clicked.connect(lambda: launch_app(steam_app_name, steam_exe_path))
+        tile = create_app_tile(name, icon_path)
+        layout.addWidget(tile)
 
-    browser_tile = create_app_tile(app_name="Browser", icon_path="icons/browser.png")
-    browser_tile.clicked.connect(lambda: launch_app(browser_app_name, browser_exe_path))
-
-
+        tile.clicked.connect(partial(launch_app, app_name, exe_path))
 
     button_exit = QPushButton("Exit the program")
-    layout.addWidget(discord_tile)
-    layout.addWidget(spotify_tile)
-    layout.addWidget(steam_tile)
-    layout.addWidget(browser_tile)
-
 
     layout.addWidget(button_exit)
 
@@ -66,25 +54,24 @@ class AppTile(QWidget):
     clicked = pyqtSignal()
 
     def enterEvent(self, event):
-        self.setStyleSheet("AppTile {background-color: #3A3A3A; border-radius: 12px;}; QLabel {background-color: transparent;};")
+        self.set_tile_color(color="#3A3A3A")
 
     def leaveEvent(self, event):
-        self.setStyleSheet("AppTile {background-color: #292929; border-radius: 12px;}; QLabel {background-color: transparent;};")
+        self.set_tile_color(color="#292929")
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if event is not None and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
 
-    def set_tile_color(self, event):
-        pass
-
+    def set_tile_color(self, color):
+        self.setStyleSheet(f"AppTile {{background-color: {color}; border-radius: 12px;}}; QLabel {{ background-color: transparent; }}")
 
 def create_app_tile(app_name, icon_path):
 
     tile = AppTile()
     tile.setFixedSize(150, 180)
     tile.setAttribute(Qt.WidgetAttribute.WA_StyledBackground,True)
-    tile.setStyleSheet("AppTile { background-color: #292929; border-radius: 12px; } QLabel { background-color: transparent; }")
+    tile.set_tile_color(color="#292929")
     tile_layout = QVBoxLayout()
     tile.setLayout(tile_layout)
 
@@ -106,31 +93,37 @@ def create_app_tile(app_name, icon_path):
     return tile
 
 def launch_app(app_name, exe_path):
-    search_data = [app_name, False]
+    search_data = {
+        "app_name": app_name,
+        "hwnd": None
+    }
+
     win32gui.EnumWindows(check_window, search_data)
 
-    if search_data[1] == False:
-        try:
-            subprocess.Popen([exe_path])
+    if search_data["hwnd"] is not None:
+        focus_window(search_data["hwnd"])
+        return
 
-        except OSError as e:
-            print(e)
-
+    try:
+        subprocess.Popen([exe_path])
+    except OSError as e:
+        QMessageBox.critical(None, "Launch Error", str(e))
 
 def check_window(hwnd, search_data):
     title = win32gui.GetWindowText(hwnd)
 
-    if search_data[0] in title and "Overlay" not in title:
-        print(title)
-        if  win32gui.IsWindowVisible(hwnd):
-            search_data[1] = True
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+    if search_data["app_name"] in title and "Overlay" not in title and win32gui.IsWindowVisible(hwnd):
+        search_data["hwnd"] = hwnd
 
-            try:
-                win32gui.SetForegroundWindow(hwnd)
-            except pywintypes.error:
-                print("Failed to focus window")
+    return True
 
+def focus_window(hwnd):
+    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+
+    try:
+        win32gui.SetForegroundWindow(hwnd)
+    except pywintypes.error:
+        print("Failed to focus window")
 
 if __name__ == "__main__":
     main()
