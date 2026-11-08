@@ -2,8 +2,9 @@ import subprocess
 import win32gui
 import win32con
 import pywintypes
+from PyQt6 import QtGui
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QToolButton, QLabel
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, pyqtSignal
 from PyQt6.QtGui import QIcon, QPixmap
 import sys
 
@@ -24,7 +25,8 @@ def visual_box():
     window = QWidget()
     window.setWindowTitle("DayDreamingg-g Assistant")
     window.resize(900, 600)
-    window.setStyleSheet("background-color: #151515;")
+    window.setObjectName("main_window")
+    window.setStyleSheet("#main_window { background-color: #151515; }")
     layout = QHBoxLayout()
     layout.setSpacing(12)
     layout.setContentsMargins(25, 25, 25, 25)
@@ -33,40 +35,55 @@ def visual_box():
 
     discord_tile = create_app_tile("Discord", "icons/discord.ico")
     discord_tile.setFixedSize(150, 180)
+    discord_tile.clicked.connect(lambda: launch_app(discord_app_name, discord_exe_path))
 
-    button_discord = QToolButton()
-    button_discord.setText("Discord")
-    button_discord.setIcon(QIcon("icons/discord.ico"))
-    button_discord.setIconSize(QSize(48, 48))
-    button_discord.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-    button_spotify = QPushButton("Spotify")
-    button_steam = QPushButton("Steam")
-    button_browser = QPushButton("Browser")
+    spotify_tile = create_app_tile("Spotify", "icons/spotify.png")
+    spotify_tile.setFixedSize(150, 180)
+    spotify_tile.clicked.connect(lambda: launch_app(spotify_app_name, spotify_exe_path))
+
+    steam_tile = create_app_tile(app_name="Steam", icon_path="icons/steam.png")
+    steam_tile.setFixedSize(150, 180)
+    steam_tile.clicked.connect(lambda: launch_app(steam_app_name, steam_exe_path))
+
+    browser_tile = create_app_tile(app_name="Browser", icon_path="icons/browser.png")
+    browser_tile.setFixedSize(150, 180)
+    browser_tile.clicked.connect(lambda: launch_app(browser_app_name, browser_exe_path))
+
+
+
     button_exit = QPushButton("Exit the program")
     layout.addWidget(discord_tile)
-    layout.addWidget(button_discord)
+    layout.addWidget(spotify_tile)
+    layout.addWidget(steam_tile)
+    layout.addWidget(browser_tile)
 
-    layout.addWidget(button_spotify)
-    layout.addWidget(button_steam)
-    layout.addWidget(button_browser)
+
     layout.addWidget(button_exit)
-    button_discord.clicked.connect(lambda: launch_app(discord_app_name, discord_exe_path))
-    button_discord.setFixedSize(100, 90)
-    button_spotify.clicked.connect(lambda: launch_app(spotify_app_name, spotify_exe_path))
-    button_spotify.setFixedSize(100, 45)
-    button_steam.clicked.connect(lambda: launch_app(steam_app_name, steam_exe_path))
-    button_steam.setFixedSize(100, 45)
-    button_browser.clicked.connect(lambda: launch_app(browser_app_name, browser_exe_path))
-    button_browser.setFixedSize(100, 45)
+
     button_exit.clicked.connect(window.close)
-    button_exit.setFixedSize(100, 45)
+    button_exit.setFixedSize(110, 45)
     #layout.addStretch()
     window.show()
     app.exec()
 
+class AppTile(QWidget):
+    #pass
+    clicked = pyqtSignal()
+
+    def mousePressEvent(self, event):
+        #pass
+        self.clicked.emit()
+    def enterEvent(self, event):
+        self.setStyleSheet("AppTile {background-color: #3A3A3A; border-radius: 12px;}; QLabel {background-color: transparent;};")
+
+    def leaveEvent(self, event):
+        self.setStyleSheet("AppTile {background-color: #292929; border-radius: 12px;}; QLabel {background-color: transparent;};")
+
 def create_app_tile(app_name, icon_path):
     #pass
-    tile = QWidget()
+    tile = AppTile()
+    tile.setAttribute(Qt.WidgetAttribute.WA_StyledBackground,True)
+    tile.setStyleSheet("AppTile { background-color: #292929; border-radius: 12px; } QLabel { background-color: transparent; }")
     tile_layout = QVBoxLayout()
     tile.setLayout(tile_layout)
 
