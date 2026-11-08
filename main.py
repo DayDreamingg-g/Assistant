@@ -2,9 +2,7 @@ import sys
 import subprocess
 from functools import partial
 
-import win32gui
-import win32con
-import pywintypes
+from window_manager import find_window, focus_window
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon, QMouseEvent
@@ -98,43 +96,16 @@ class AppTile(QWidget):
 
 
 def launch_app(title_pattern, exe_path):
-    search_data = {
-        "title_pattern": title_pattern,
-        "hwnd": None
-    }
+    hwnd = find_window(title_pattern)
 
-    win32gui.EnumWindows(check_window, search_data)
-
-    if search_data["hwnd"] is not None:
-        focus_window(search_data["hwnd"])
+    if hwnd is not None:
+        focus_window(hwnd)
         return
 
     try:
         subprocess.Popen([exe_path])
     except OSError as e:
         QMessageBox.critical(None, "Launch Error", str(e))
-
-
-def check_window(hwnd, search_data):
-    title = win32gui.GetWindowText(hwnd)
-    target = search_data["title_pattern"]
-
-    matches = title == target if target == "Steam" else target in title
-
-    if matches and "Overlay" not in title and win32gui.IsWindowVisible(hwnd):
-        search_data["hwnd"] = hwnd
-
-    return True
-
-
-def focus_window(hwnd):
-    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-
-    try:
-        win32gui.SetForegroundWindow(hwnd)
-    except pywintypes.error:
-        print("Failed to focus window")
-
 
 if __name__ == "__main__":
     main()
