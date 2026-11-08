@@ -2,10 +2,9 @@ import subprocess
 import win32gui
 import win32con
 import pywintypes
-from PyQt6 import QtGui
-from PyQt6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QToolButton, QLabel
-from PyQt6.QtCore import Qt, QSize, pyqtSignal
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QLabel
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QIcon, QMouseEvent
 import sys
 
 discord_exe_path = "C:/Users/facei/AppData/Local/Discord/Discord.exe"
@@ -34,19 +33,15 @@ def visual_box():
     window.setLayout(layout)
 
     discord_tile = create_app_tile("Discord", "icons/discord.ico")
-    discord_tile.setFixedSize(150, 180)
     discord_tile.clicked.connect(lambda: launch_app(discord_app_name, discord_exe_path))
 
     spotify_tile = create_app_tile("Spotify", "icons/spotify.png")
-    spotify_tile.setFixedSize(150, 180)
     spotify_tile.clicked.connect(lambda: launch_app(spotify_app_name, spotify_exe_path))
 
     steam_tile = create_app_tile(app_name="Steam", icon_path="icons/steam.png")
-    steam_tile.setFixedSize(150, 180)
     steam_tile.clicked.connect(lambda: launch_app(steam_app_name, steam_exe_path))
 
     browser_tile = create_app_tile(app_name="Browser", icon_path="icons/browser.png")
-    browser_tile.setFixedSize(150, 180)
     browser_tile.clicked.connect(lambda: launch_app(browser_app_name, browser_exe_path))
 
 
@@ -62,26 +57,32 @@ def visual_box():
 
     button_exit.clicked.connect(window.close)
     button_exit.setFixedSize(110, 45)
-    #layout.addStretch()
+
     window.show()
     app.exec()
 
 class AppTile(QWidget):
-    #pass
+
     clicked = pyqtSignal()
 
-    def mousePressEvent(self, event):
-        #pass
-        self.clicked.emit()
     def enterEvent(self, event):
         self.setStyleSheet("AppTile {background-color: #3A3A3A; border-radius: 12px;}; QLabel {background-color: transparent;};")
 
     def leaveEvent(self, event):
         self.setStyleSheet("AppTile {background-color: #292929; border-radius: 12px;}; QLabel {background-color: transparent;};")
 
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        if event is not None and event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
+
+    def set_tile_color(self, event):
+        pass
+
+
 def create_app_tile(app_name, icon_path):
-    #pass
+
     tile = AppTile()
+    tile.setFixedSize(150, 180)
     tile.setAttribute(Qt.WidgetAttribute.WA_StyledBackground,True)
     tile.setStyleSheet("AppTile { background-color: #292929; border-radius: 12px; } QLabel { background-color: transparent; }")
     tile_layout = QVBoxLayout()
@@ -121,7 +122,7 @@ def check_window(hwnd, search_data):
 
     if search_data[0] in title and "Overlay" not in title:
         print(title)
-        if win32gui.IsWindowVisible(hwnd) == True:
+        if  win32gui.IsWindowVisible(hwnd):
             search_data[1] = True
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
 
