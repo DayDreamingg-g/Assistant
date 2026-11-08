@@ -5,7 +5,6 @@ import pywintypes
 
 def main():
     jarvis()
-    # win32gui.EnumWindows(check_window, None)
 
 def check_window(hwnd, search_data):
     title = win32gui.GetWindowText(hwnd)
@@ -13,25 +12,13 @@ def check_window(hwnd, search_data):
     if search_data[0] in title and "Overlay" not in title:
         print(title)
         if win32gui.IsWindowVisible(hwnd) == True:
-            # print("Window is visible")
             search_data[1] = True
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            # win32gui.SetForegroundWindow(hwnd)
 
             try:
                 win32gui.SetForegroundWindow(hwnd)
             except pywintypes.error:
                 print("Failed to focus window")
-
-
-        # else:
-            # print("Window is hiden try to start up")
-        # subprocess.Popen(["C:/Users/facei/AppData/Local/Discord/Discord.exe"])
-
-        # print(win32gui.IsIconic(hwnd))
-
-
-        # search_data[1] = True
 
 def jarvis():
     print("Hello, I'm DayDreamingg-g assistant.")
@@ -71,15 +58,11 @@ def jarvis():
         win32gui.EnumWindows(check_window, search_data)
 
         if search_data[1] == False:
-            # print("Window found")
-
             try:
-                # print("Try to start up app")
                 subprocess.Popen([exe_path])
 
             except OSError as e:
                 print(e)
+
 if __name__ == "__main__":
     main()
-
-# subprocess.Popen(["C:/Program Files/Google/Chrome/Application/chrome.exe"])
